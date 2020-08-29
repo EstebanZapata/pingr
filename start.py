@@ -1,5 +1,6 @@
 import os
-# from pythonping import ping
+from pythonping import ping
 
 target = os.environ.get('TARGET')
-print(target)
+ping(target, count=1, verbose=True)
+print('done')
