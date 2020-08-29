@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from datetime import datetime
 from influxdb import InfluxDBClient
@@ -6,6 +7,7 @@ from pythonping import ping
 
 source = os.environ.get('SOURCE', '')
 target = os.environ.get('TARGET', '8.8.8.8')
+provider = os.environ.get('PROVIDER', '')
 wait = os.environ.get('WAIT', '1')
 
 influxdbUser = os.environ.get('INFLUXDB_USER')
@@ -15,10 +17,25 @@ influxdbPort = os.environ.get('INFLUXDB_PORT', '8086')
 influxdbDatabase = os.environ.get('INFLUXDB_DATABASE', 'internet-stats')
 
 def initInflux():
-    client = InfluxDBClient(host=influxdbHost, port=int(influxdbPort), username=influxdbUser, password=influxdbPassword)
-    client.create_database(influxdbDatabase)
-    client.switch_database(influxdbDatabase)
-    return client
+    if (influxdbUser is None or influxdbPassword is None):
+        return
+
+    connectionAttempts = 0
+    
+    while connectionAttempts < 5:
+        try:
+            client = InfluxDBClient(host=influxdbHost, port=int(influxdbPort), username=influxdbUser, password=influxdbPassword)
+            client.create_database(influxdbDatabase)
+            client.switch_database(influxdbDatabase)
+            print('Connection successful')
+            return client
+        except:
+            print('Connection attempt ' + str(connectionAttempts) + ' failed. Retrying...')
+            time.sleep(1)
+            connectionAttempts += 1
+            
+    sys.exit('Failed to connect')
+    
     
 client = initInflux()
 
@@ -33,7 +50,8 @@ def sendToInflux(response):
         "measurement": "ping",
         "tags": {
             "source": source,
-            "target": target
+            "target": target,
+            "provider": provider
         },
         "time": str(datetime.utcnow()),
         "fields": {
