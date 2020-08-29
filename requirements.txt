@@ -1,1 +1,2 @@
+influxdb==5.3.0
 pythonping==1.0.13
