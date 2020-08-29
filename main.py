@@ -4,6 +4,7 @@ from datetime import datetime
 from influxdb import InfluxDBClient
 from pythonping import ping
 
+source = os.environ.get('SOURCE', '')
 target = os.environ.get('TARGET', '8.8.8.8')
 wait = os.environ.get('WAIT', '1')
 
@@ -28,19 +29,21 @@ def handleResponse(response):
         sendToInflux(response)
     
 def sendToInflux(response):
-    json = [{
+    point = [{
         "measurement": "ping",
         "tags": {
+            "source": source,
             "target": target
         },
         "time": str(datetime.utcnow()),
         "fields": {
-            "responseTimeMs": response.time_elapsed_ms if response.success else 9999
+            "responseTimeMs": response.time_elapsed_ms if response.success else 999,
+            "success": response.success
         }
     }]
     
-    client.write_points(json)
-    print('success write')
+    client.write_points(point)
+    print('Influx success: ' + str(response))
 
 while True:
     responses = ping(target, timeout=1, count=1)
