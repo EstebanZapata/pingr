@@ -55,7 +55,7 @@ def sendToInflux(response):
         },
         "time": str(datetime.utcnow()),
         "fields": {
-            "responseTimeMs": response.time_elapsed_ms if response.success else 999,
+            "responseTimeMs": int(response.time_elapsed_ms) if response.success else 999,
             "success": response.success
         }
     }]
